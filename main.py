@@ -6,14 +6,18 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.models.taskinstance import TaskInstance
 from airflow.models import Variable
+import logging
 
+logging.basicConfig(level=logging.INFO)
 
 def task_start() -> bool:
-    print("Start")
+    """Start PandasETL"""
+    logging.info("Start")
     return True
 
 
 def upload_csv(**kwargs) -> bool:
+    """Upload csv file """
     data = pd.read_csv(Variable.get("csv_file"))
     data = data.dropna()
     data = data.replace(np.nan, '-')
@@ -25,7 +29,7 @@ def upload_csv(**kwargs) -> bool:
 
 
 def write_to_mongodb(ti: TaskInstance) -> bool:
-    print(type(ti))
+    """Write file to mongodb"""
     data = ti.xcom_pull(task_ids="upload_csv", key="signal")
     client = MongoClient(host=Variable.get("host"), port=int(Variable.get("port")))
     db = client[Variable.get("db_name")]
@@ -36,7 +40,8 @@ def write_to_mongodb(ti: TaskInstance) -> bool:
 
 
 def task_exit() -> bool:
-    print("Exit")
+    """Exit PandasETL"""
+    logging.info("Exit")
     return True
 
 
